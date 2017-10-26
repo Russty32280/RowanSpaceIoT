@@ -26,30 +26,39 @@ The functions exposed by this library can be broken into two main categories: Re
 
 ### Write to Slave I2C Device
 
-#### void I2CWriteSingleByte(char I2CAddress, char Data)
+#### I2CWriteSingleByte(char I2CAddress, char Data)
 This should be used when only 1 byte of data needs to be sent to an I2C Slave Device. I2CAddress is the 7 bit I2C Address of the desired Slave. Data is the one byte of data you wish to transmit.
 ```c
-SlaveAddress = 0x40;
+char SlaveAddress = 0x40;
 
 I2CWriteSingleByte(SlaveAddress, 0xFF);
 ```
 
-#### void I2CWriteMultipleBytes(char I2CAddress, int NumOfBytes, char \*Data)
+#### I2CWriteMultipleBytes(char I2CAddress, int NumOfBytes, char \*Data)
 This function should be called when more than one byte needs to be transmitted to an I2C Slave device. I2CAddress is the 7-bit address of the Slave Device. NumOfBytes is the total number of bytes which need to be sent to the Slave. \*Data is the pointer to an array of char data meant to be sent to the slave.
 ```c
-SlaveAddress = 0x40;
-TXData[4] = {0x00, 0x22, 0x55, 0x88};
+char SlaveAddress = 0x40;
+char TXData[4] = {0x00, 0x22, 0x55, 0x88};
 
 I2CWriteMultipleBytes(SlaveAddress, 4, &TXData);
 ```
 
 ### Read from Slave I2C Device
 
-#### void I2CReadSingleByte(char I2CAddress, char \*ReturnedData)
+#### I2CReadSingleByte(char I2CAddress, char \*ReturnedData)
 This function should be called if you want to read only one byte of data from a slave device. Instead of returning anything in the function, you need to instead pass in an address to save the data in.
 ```c
-SlaveAddress = 0x40;
-RXData = 0;
+char SlaveAddress = 0x40;
+char RXData = 0;
 
 I2CReadSingleByte(SlaveAddress, &RXData);
+```
+
+#### I2CReadMultipleBytes(char I2CAddress, int NumOfBytes, char \*ReceivedData)
+This function should be called if you want to read more than one byte of data from the Slave device. You will need to pass in the number of bytes you are expecting to receive as well as a pointer to where you want to store your received data.
+```c
+char SlaveAddress = 0x40;
+char RXData[4];
+
+I2CReadMultipleBytes(SlaveAddress, 4, &RXData);
 ```
