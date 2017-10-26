@@ -42,3 +42,14 @@ TXData[4] = {0x00, 0x22, 0x55, 0x88};
 
 I2CWriteMultipleBytes(SlaveAddress, 4, &TXData);
 ```
+
+### Read from Slave I2C Device
+
+#### void I2CReadSingleByte(char I2CAddress, char \*ReturnedData)
+This function should be called if you want to read only one byte of data from a slave device. Instead of returning anything in the function, you need to instead pass in an address to save the data in.
+```c
+SlaveAddress = 0x40;
+RXData = 0;
+
+I2CReadSingleByte(SlaveAddress, &RXData);
+```
