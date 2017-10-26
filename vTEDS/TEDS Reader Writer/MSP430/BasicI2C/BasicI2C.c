@@ -32,10 +32,12 @@ void I2CWriteSingleByte(char I2CAddress, char Data)
     UCB0I2CSA = I2CAddress;         // Set the target slave address
     UCB0CTL1 &= ~UCSWRST;           // Clear the SW Reset (may not be needed?)
     UCB0CTL1 |= UCTR + UCTXSTT;     // Set the USCB0 Peripheral to TX and send Start Byte
-    while (UCB0CTL1 & UCTXSTT);     // Hold up until Start condition is generated and first data byte can be written into TXBUF
-    UCB0TXBUF = Data;               // Set TX Buffer to data
-    while (UCB0CTL1 & UCTXSTT);     // Wait until we are able to send another piece of data
-    UCB0CTL1 |= UCTXSTP;            // Generate our stop condition after the next acknowledge
+    //while (!(UCB0CTL1 & UCTXSTT));     // Hold up until Start condition is generated and first data byte can be written into TXBUF
+    while (!(IFG2 & UCB0TXIFG));    // Wait until we are ready to send a byte
+    UCB0TXBUF = Data;
+    UCB0CTL1 |= UCTXSTP;            // Generate our stop condition after the next acknowledge// Set TX Buffer to data
+    while (!(UCB0CTL1 & UCTXSTP));     // Wait until we are able to send another piece of data
+    IFG2 &= ~UCB0TXIFG;
 }
 
 void I2CWriteMultipleBytes(char I2CAddress, int NumOfBytes, char *Data)
@@ -47,13 +49,20 @@ void I2CWriteMultipleBytes(char I2CAddress, int NumOfBytes, char *Data)
     //while (~(IFG2 & UCB0TXIFG));    // Hold up until Start condition is generated and first data byte can be written into TXBUF
     while (CurrentByte <= NumOfBytes)   // While there are bytes to send
     {
-        while (~(IFG2 & UCB0TXIFG));    // Wait until we are ready to send a byte
+        while (!(IFG2 & UCB0TXIFG));    // Wait until we are ready to send a byte
         UCB0TXBUF = *Data;          // Set TXBUF to the current piece of data
         CurrentByte++;              // Increment our internal byte counter
         *Data++;                    // Move to the next point of data
+        if (CurrentByte > NumOfBytes)
+        {
+            UCB0CTL1 |= UCTXSTP;
+        }
     }
-    while (UCB0CTL1 & UCTXSTT);    // Wait until we can send our stop bit
-    UCB0CTL1 |= UCTXSTP;            // Generate our stop condition after the next acknowledge
+    while (!(UCB0CTL1 & UCTXSTP));     // Wait until we are able to send another piece of data
+    IFG2 &= ~UCB0TXIFG;
+
+    //while (UCB0CTL1 & UCTXSTT);    // Wait until we can send our stop bit
+    //UCB0CTL1 |= UCTXSTP;            // Generate our stop condition after the next acknowledge
 }
 
 void I2CReadSingleByte(char I2CAddress, char *ReceivedData)
