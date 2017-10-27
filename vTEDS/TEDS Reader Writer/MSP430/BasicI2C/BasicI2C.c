@@ -44,22 +44,19 @@ void I2CWriteMultipleBytes(char I2CAddress, int NumOfBytes, char *Data)
 {
     int CurrentByte = 0;
     UCB0I2CSA = I2CAddress;         // Set the target slave address
-    UCB0CTL1 &= ~UCSWRST;          // Clear the SW Reset (may not be needed)
+    UCB0CTL1 &= ~UCSWRST;           // Clear the SW Reset (may not be needed)
     UCB0CTL1 |= UCTR + UCTXSTT;     // Set the USCB0 Peripheral to TX and send Start Byte
-    //while (!(IFG2 & UCB0TXIFG));    // Hold up until Start condition is generated and first data byte can be written into TXBUF
     while (CurrentByte <= NumOfBytes)   // While there are bytes to send
     {
         while (!(IFG2 & UCB0TXIFG));    // Wait until we are ready to send a byte
         UCB0TXBUF = *Data;          // Set TXBUF to the current piece of data
         CurrentByte++;              // Increment our internal byte counter
-        Data++;                    // Move to the next point of data
+        Data++;                     // Move to the next point of data
     }
-    UCB0CTL1 |= UCTXSTP;
+    UCB0CTL1 |= UCTXSTP;            // Send the stop byte after the next transmission
     while (UCB0CTL1 & UCTXSTP);     // Wait until the stop is sent
     IFG2 &= ~UCB0TXIFG;
 
-    //while (UCB0CTL1 & UCTXSTT);    // Wait until we can send our stop bit
-    //UCB0CTL1 |= UCTXSTP;            // Generate our stop condition after the next acknowledge
 }
 
 void I2CReadSingleByte(char I2CAddress, char *ReceivedData)
@@ -75,21 +72,20 @@ void I2CReadSingleByte(char I2CAddress, char *ReceivedData)
 
 void I2CReadMultipleBytes(char I2CAddress, int NumOfBytes, char *ReceivedData)
 {
-    int CurrentByte = 1;            // We need to track how many bytes we have received
+    int CurrentByte = 0;            // We need to track how many bytes we have received
     UCB0I2CSA = I2CAddress;         // Set the target slave address
     UCB0CTL1 &= ~UCSWRST;          // Clear the SW Reset (again, may not be necessary)
     UCB0CTL1 &= ~UCTR;              // Set our I2C Master to Receive Mode for Reading
     UCB0CTL1 |= UCTXSTT;            // Send out our start condition
     while (CurrentByte <= NumOfBytes)    // We can run this until the last byte needs to be read
     {
-        while (~(IFG2 & UCB0RXIFG));    // Wait until we receive a character
+        while (!(IFG2 & UCB0RXIFG));    // Wait until we receive a character
         *ReceivedData = UCB0RXBUF;  // Load Received Byte into the current address
         CurrentByte++;
         *ReceivedData++;
-
-        if (CurrentByte == NumOfBytes)  // If we are receiving the last byte, we need to send our stop condition
-        {
-            UCB0CTL1 |= UCTXSTP;    // Send a NACK and Stop after the next received byte
-        }
+        IFG2 &= ~UCB0RXIFG;
     }
+    UCB0CTL1 |= UCTXSTP;            // Send the stop byte after the next transmission
+    while (UCB0CTL1 & UCTXSTP);     // Wait until the stop is sent
+    IFG2 &= ~UCB0RXIFG;
 }
