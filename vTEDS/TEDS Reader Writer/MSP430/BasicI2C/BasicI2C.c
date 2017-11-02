@@ -82,7 +82,7 @@ void I2CReadMultipleBytes(char I2CAddress, int NumOfBytes, char *ReceivedData)
         while (!(IFG2 & UCB0RXIFG));    // Wait until we receive a character
         *ReceivedData = UCB0RXBUF;  // Load Received Byte into the current address
         CurrentByte++;
-        *ReceivedData++;
+        ReceivedData++;
         IFG2 &= ~UCB0RXIFG;
     }
     UCB0CTL1 |= UCTXSTP;            // Send the stop byte after the next transmission
